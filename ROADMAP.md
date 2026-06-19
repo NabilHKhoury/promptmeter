@@ -24,12 +24,12 @@ These are non-negotiable because they're what keep the tool trustworthy and what
 
 Goal: a runnable `promptmeter` CLI that captures a prompt, estimates a cost range from static Claude pricing, and hands off to `claude`. No codebase scan or TUI yet.
 
-### Milestone 1.1 — CLI scaffold
-- ☐ Node.js + TypeScript project; `promptmeter` bin entry; build (tsc/tsup) + run
-- ☐ Arg parsing (e.g. `promptmeter run "<task>" [--model …]`)
-- ☐ Lint + format (ESLint + Prettier), npm scripts
-- ☐ Directory structure (`src/`, `data/`, `bin/`)
-- **Acceptance:** `promptmeter --help` works; `npm run build` passes; binary is invokable.
+### Milestone 1.1 — CLI scaffold ☑
+- ☑ Node.js + TypeScript project; `promptmeter` bin entry; build (tsc/tsup) + run
+- ☑ Arg parsing (e.g. `promptmeter run "<task>" [--model …]`)
+- ☑ Lint + format (ESLint + Prettier), npm scripts
+- ☑ Directory structure (`src/`, `data/`, `bin/`)
+- **Acceptance:** `promptmeter --help` works; `npm run build` passes; binary is invokable. — **met (18/18 acceptance checks; PR on `feature/milestone-1-1-scaffold`)**
 
 ### Milestone 1.2 — Model config layer
 - ☐ `data/models.json` schema (id, display_name, input/output per-MTok, context_window, qualitative fit notes)
