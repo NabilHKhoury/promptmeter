@@ -56,12 +56,12 @@ Goal: a runnable `promptmeter` CLI that captures a prompt, estimates a cost rang
 
 ---
 
-## Phase 1.5 — Interception (shadow `claude`)
-- ☐ `promptmeter install` — add a cleanly-removable shell shim/alias so `claude "…"` routes through PromptMeter, then execs the real binary
-- ☐ `promptmeter uninstall` — full removal; real `claude` always reachable
-- ☐ Bypass flag / env var (e.g. `PROMPTMETER_OFF=1`) so a user can always skip the overlay
-- ☐ Resolve and cache the real `claude` path; detect if Claude Code isn't installed
-- **Acceptance:** after install, `claude "…"` shows the analysis then runs; after uninstall, `claude` is byte-for-byte the original behavior.
+## Phase 1.5 — Interception (shadow `claude`) ☑
+- ☑ `promptmeter install` — add a cleanly-removable shell shim/alias so `claude "…"` routes through PromptMeter, then execs the real binary
+- ☑ `promptmeter uninstall` — full removal; real `claude` always reachable
+- ☑ Bypass flag / env var (e.g. `PROMPTMETER_OFF=1`) so a user can always skip the overlay
+- ☑ Resolve and cache the real `claude` path; detect if Claude Code isn't installed
+- **Acceptance:** after install, `claude "…"` shows the analysis then runs; after uninstall, `claude` is byte-for-byte the original behavior. — **met (16/16; byte-for-byte profile restore, injection-safe exec, `claude` never broken; security-reviewed; PR on `feature/phase-1-5-interception`)**
 
 ---
 

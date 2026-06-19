@@ -6,6 +6,7 @@ import {
   resolveClaudePath,
   buildClaudeArgs,
   runClaude,
+  runRealClaude,
   exitCodeFor,
 } from "./claude.js";
 
@@ -56,6 +57,27 @@ describe("resolveClaudePath", () => {
     const bin = join(dir, CLAUDE_NAME);
     writeFileSync(bin, "");
     expect(resolveClaudePath({ PATH: dir })).toBe(bin);
+  });
+});
+
+describe("runRealClaude (passthrough exec)", () => {
+  it("spawns the bin with the given argv and shell:false, returning status", () => {
+    let seen: { cmd: string; args: string[]; opts: unknown } | null = null;
+    const fakeSpawn = (
+      cmd: string,
+      args: string[],
+      opts: { stdio: "inherit"; shell: false },
+    ) => {
+      seen = { cmd, args, opts };
+      return { status: 5, signal: null };
+    };
+    const r = runRealClaude("/bin/claude", ["hi", "--model", "x"], fakeSpawn);
+    expect(seen).toEqual({
+      cmd: "/bin/claude",
+      args: ["hi", "--model", "x"],
+      opts: { stdio: "inherit", shell: false },
+    });
+    expect(r.status).toBe(5);
   });
 });
 

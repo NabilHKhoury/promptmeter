@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { statSync } from "node:fs";
-import { delimiter, join } from "node:path";
+import { delimiter, join, resolve } from "node:path";
 
 export interface ClaudeRun {
   status: number | null;
@@ -34,14 +34,19 @@ function isFile(p: string): boolean {
  */
 export function resolveClaudePath(
   env: NodeJS.ProcessEnv = process.env,
+  excludeDir?: string,
 ): string | null {
   const override = env.PROMPTMETER_CLAUDE_BIN;
   if (override) {
     return isFile(override) ? override : null;
   }
+  const norm = (p: string) =>
+    process.platform === "win32" ? resolve(p).toLowerCase() : resolve(p);
+  const exclude = excludeDir ? norm(excludeDir) : undefined;
   const exts = process.platform === "win32" ? [".exe", ".com"] : [""];
   const dirs = (env.PATH ?? "").split(delimiter).filter(Boolean);
   for (const dir of dirs) {
+    if (exclude && norm(dir) === exclude) continue; // never resolve our own shim dir
     for (const ext of exts) {
       const candidate = join(dir, `claude${ext}`);
       if (isFile(candidate)) return candidate;
@@ -62,6 +67,20 @@ export function buildClaudeArgs(task: string, modelId: string): string[] {
  */
 export function exitCodeFor(run: ClaudeRun): number {
   return run.signal ? 1 : (run.status ?? 1);
+}
+
+/**
+ * Run a resolved `claude` binary with a pre-built argv (pass-through). stdio
+ * inherited, `shell:false` (no injection). Used by the interception path, which
+ * forwards the user's original `claude` args verbatim.
+ */
+export function runRealClaude(
+  bin: string,
+  args: string[],
+  spawn: SpawnFn = spawnSync,
+): ClaudeRun {
+  const r = spawn(bin, args, { stdio: "inherit", shell: false });
+  return { status: r.status, signal: r.signal, error: r.error };
 }
 
 /**
