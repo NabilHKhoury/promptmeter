@@ -19,11 +19,12 @@ See `ROADMAP.md` for milestones and `README.md` for the product vision.
 - `npm run typecheck` — `tsc --noEmit`.
 - `npm run lint` — `eslint .`.
 - `npm run format` / `npm run format:check` — Prettier write / check.
+- `npm test` — Vitest (`vitest run`); unit tests live in `src/*.test.ts`.
 - **Invoke the CLI:** `node bin/promptmeter.js …` (e.g. `--help`, `--version`, `run "<task>" [--model <id>]`, `models`). On Windows this is the reliable invocation; `npm link` also creates a `promptmeter` shim.
 - `promptmeter models` — list the configured Claude models + estimated pricing (exercises `loadModels()`).
 
 ## Layout
-- `src/` — TypeScript source: `index.ts` (CLI), `models.ts` (`loadModels()`), `tokenizer.ts` (`estimateTokens()` — returns a labeled token **range** + `isApproximate`; heuristic, no exact offline Claude tokenizer; surfaced in `run`).
+- `src/` — TypeScript source: `index.ts` (CLI), `models.ts` (`loadModels()`), `tokenizer.ts` (`estimateTokens()` — labeled token **range** + `isApproximate`; heuristic), `estimate.ts` (`estimateOutputTokens`/`estimateCost`/`formatEstimate` — labeled USD cost **ranges**, pure + unit-tested). `run` prints the plain-text pre-run report (default model `claude-sonnet-4-6`; `--model` to switch); loader errors surface as a clean one-line `promptmeter: <msg>` + exit 1.
 - `bin/` — executable launcher `promptmeter.js` (shebang; dynamic-imports `../dist/index.js`).
 - `data/` — static config. **`data/models.json` is the pricing source of truth**, seeded with the three Claude models (Opus 4.8, Sonnet 4.6, Haiku 4.5). The typed, validating loader is `src/models.ts` (`loadModels()` — runtime-reads `data/models.json`, fails loudly on malformed entries; adding a model is a JSON-only edit, no code change).
 - `dist/` — build output (gitignored).

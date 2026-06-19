@@ -2,6 +2,19 @@ import { readFileSync } from "node:fs";
 import { Command } from "commander";
 import { loadModels } from "./models.js";
 import { estimateTokens } from "./tokenizer.js";
+import {
+  estimateOutputTokens,
+  estimateCost,
+  formatEstimate,
+} from "./estimate.js";
+
+const DEFAULT_MODEL = "claude-sonnet-4-6";
+
+/** Print a one-line `promptmeter: <msg>` to stderr and exit 1 (no stack trace). */
+function fail(message: string): never {
+  console.error(`promptmeter: ${message}`);
+  process.exit(1);
+}
 
 // Read the real version from package.json (single source of truth). After
 // bundling, this file lives at dist/index.js, so "../package.json" resolves to
@@ -25,18 +38,20 @@ program
   .description("Analyze a task and (later) hand off to claude")
   .option("-m, --model <model>", "Claude model to use (e.g. claude-opus-4-8)")
   .action((task: string, opts: { model?: string }) => {
-    // M1.3: token estimate (a labeled range) is wired. Cost (M1.4) and the real
-    // `claude` hand-off (M1.5) are still pending. No exec, no network.
-    const t = estimateTokens(task);
-    console.log("PromptMeter analysis:");
-    console.log(`  Task:  ${task}`);
-    console.log(`  Estimated prompt tokens: ~${t.low}–${t.high} (approximate)`);
-    if (opts.model) {
-      console.log(`  Model: ${opts.model}`);
+    // M1.4: pre-run cost estimate (labeled ranges). The real `claude` hand-off is
+    // M1.5. No exec, no network — only the local config is read.
+    const id = opts.model ?? DEFAULT_MODEL;
+    try {
+      const model = loadModels().find((m) => m.id === id);
+      if (!model) {
+        fail(`unknown model "${id}" (see \`promptmeter models\`)`);
+      }
+      const input = estimateTokens(task);
+      const output = estimateOutputTokens(input);
+      console.log(formatEstimate(estimateCost(input, output, model)));
+    } catch (err) {
+      fail((err as Error).message);
     }
-    console.log(
-      "  Note: cost estimate and the real `claude` hand-off arrive in Milestones 1.4-1.5.",
-    );
   });
 
 program
@@ -45,9 +60,12 @@ program
     "List the configured Claude models and their (estimated) pricing",
   )
   .action(() => {
-    // loadModels() throws on malformed data/models.json; the uncaught error
-    // exits non-zero with the message on stderr (fail loud).
-    const models = loadModels();
+    let models;
+    try {
+      models = loadModels();
+    } catch (err) {
+      fail((err as Error).message);
+    }
     console.log(
       "Configured models (pricing is an estimate — verify against Anthropic):",
     );

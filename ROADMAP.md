@@ -42,10 +42,10 @@ Goal: a runnable `promptmeter` CLI that captures a prompt, estimates a cost rang
 - ☑ Output an estimate **range** + `isApproximate` flag
 - **Acceptance:** a known prompt yields a stable range; approximations are flagged. — **met (14/14; `run` shows `~low–high (approximate)`; PR on `feature/milestone-1-3-token-estimation`)**
 
-### Milestone 1.4 — Cost estimation + plain output
-- ☐ `src/estimate.ts` — input/output/total cost as a **range** from model pricing (pure, unit-tested)
-- ☐ Plain-text pre-run report (no TUI): model, token range, cost range, all labeled as estimates
-- **Acceptance:** unit tests cover representative prompts across all three Claude models.
+### Milestone 1.4 — Cost estimation + plain output ☑
+- ☑ `src/estimate.ts` — input/output/total cost as a **range** from model pricing (pure, unit-tested)
+- ☑ Plain-text pre-run report (no TUI): model, token range, cost range, all labeled as estimates
+- **Acceptance:** unit tests cover representative prompts across all three Claude models. — **met (Vitest added; 15 tests incl. Opus/Sonnet/Haiku; PR on `feature/milestone-1-4-cost-estimation`)**
 
 ### Milestone 1.5 — Hand-off to `claude`
 - ☐ `promptmeter run "<task>"` execs the real `claude` with the chosen `--model`
