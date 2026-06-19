@@ -1,1 +1,23 @@
-{}
+{
+  "claude-opus-4-8": {
+    "display_name": "Claude Opus 4.8",
+    "input_per_mtok": 5,
+    "output_per_mtok": 25,
+    "context_window": 1000000,
+    "fit_notes": "Deepest reasoning; best for complex/ambiguous multi-file work. Highest cost."
+  },
+  "claude-sonnet-4-6": {
+    "display_name": "Claude Sonnet 4.6",
+    "input_per_mtok": 3,
+    "output_per_mtok": 15,
+    "context_window": 1000000,
+    "fit_notes": "Balanced default for most coding tasks; strong quality/cost trade-off."
+  },
+  "claude-haiku-4-5": {
+    "display_name": "Claude Haiku 4.5",
+    "input_per_mtok": 1,
+    "output_per_mtok": 5,
+    "context_window": 200000,
+    "fit_notes": "Fast and cheapest; good for boilerplate/refactor and well-specified tasks."
+  }
+}

@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { Command } from "commander";
+import { loadModels } from "./models.js";
 
 // Read the real version from package.json (single source of truth). After
 // bundling, this file lives at dist/index.js, so "../package.json" resolves to
@@ -32,6 +33,26 @@ program
     console.log(
       "  Note: cost/token estimates and the real `claude` hand-off arrive in Milestones 1.3-1.5.",
     );
+  });
+
+program
+  .command("models")
+  .description(
+    "List the configured Claude models and their (estimated) pricing",
+  )
+  .action(() => {
+    // loadModels() throws on malformed data/models.json; the uncaught error
+    // exits non-zero with the message on stderr (fail loud).
+    const models = loadModels();
+    console.log(
+      "Configured models (pricing is an estimate — verify against Anthropic):",
+    );
+    for (const m of models) {
+      console.log(
+        `  ${m.id}  ${m.display_name}  $${m.input_per_mtok}/$${m.output_per_mtok} per Mtok  ${m.context_window} ctx`,
+      );
+      console.log(`      fit: ${m.fit_notes}`);
+    }
   });
 
 export function main(argv: string[] = process.argv): void {

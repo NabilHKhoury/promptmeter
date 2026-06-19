@@ -19,12 +19,13 @@ See `ROADMAP.md` for milestones and `README.md` for the product vision.
 - `npm run typecheck` — `tsc --noEmit`.
 - `npm run lint` — `eslint .`.
 - `npm run format` / `npm run format:check` — Prettier write / check.
-- **Invoke the CLI:** `node bin/promptmeter.js …` (e.g. `--help`, `--version`, `run "<task>" [--model <id>]`). On Windows this is the reliable invocation; `npm link` also creates a `promptmeter` shim.
+- **Invoke the CLI:** `node bin/promptmeter.js …` (e.g. `--help`, `--version`, `run "<task>" [--model <id>]`, `models`). On Windows this is the reliable invocation; `npm link` also creates a `promptmeter` shim.
+- `promptmeter models` — list the configured Claude models + estimated pricing (exercises `loadModels()`).
 
 ## Layout
 - `src/` — TypeScript source (entry `src/index.ts`).
 - `bin/` — executable launcher `promptmeter.js` (shebang; dynamic-imports `../dist/index.js`).
-- `data/` — static config. **`data/models.json` is the pricing source of truth** (currently a `{}` placeholder; the schema + the three Claude models are seeded in Milestone 1.2).
+- `data/` — static config. **`data/models.json` is the pricing source of truth**, seeded with the three Claude models (Opus 4.8, Sonnet 4.6, Haiku 4.5). The typed, validating loader is `src/models.ts` (`loadModels()` — runtime-reads `data/models.json`, fails loudly on malformed entries; adding a model is a JSON-only edit, no code change).
 - `dist/` — build output (gitignored).
 
 ## Critical rules (credibility guardrails — see ROADMAP.md)

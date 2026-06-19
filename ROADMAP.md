@@ -31,11 +31,11 @@ Goal: a runnable `promptmeter` CLI that captures a prompt, estimates a cost rang
 - ☑ Directory structure (`src/`, `data/`, `bin/`)
 - **Acceptance:** `promptmeter --help` works; `npm run build` passes; binary is invokable. — **met (18/18 acceptance checks; PR on `feature/milestone-1-1-scaffold`)**
 
-### Milestone 1.2 — Model config layer
-- ☐ `data/models.json` schema (id, display_name, input/output per-MTok, context_window, qualitative fit notes)
-- ☐ Seed Claude models: Opus 4.8 ($5/$25, 1M), Sonnet 4.6 ($3/$15, 1M), Haiku 4.5 ($1/$5, 200K)
-- ☐ Typed loader + validation (`src/models.ts`)
-- **Acceptance:** models load as typed objects; adding an entry needs no code change.
+### Milestone 1.2 — Model config layer ☑
+- ☑ `data/models.json` schema (id, display_name, input/output per-MTok, context_window, qualitative fit notes)
+- ☑ Seed Claude models: Opus 4.8 ($5/$25, 1M), Sonnet 4.6 ($3/$15, 1M), Haiku 4.5 ($1/$5, 200K)
+- ☑ Typed loader + validation (`src/models.ts`)
+- **Acceptance:** models load as typed objects; adding an entry needs no code change. — **met (18/18; `promptmeter models`; PR on `feature/milestone-1-2-model-config`)**
 
 ### Milestone 1.3 — Token estimation
 - ☐ `src/tokenizer.ts` — estimate prompt tokens (official tokenizer where available; heuristic fallback)
