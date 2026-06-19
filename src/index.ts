@@ -17,6 +17,13 @@ import { scanRepo, formatContext } from "./scan.js";
 import { formatRecommendation } from "./recommend.js";
 import { crossProviderComparison, formatCrossProvider } from "./providers.js";
 import {
+  shouldShowOverlay,
+  resolveAction,
+  setModelArg,
+  type OverlayAction,
+} from "./overlay.js";
+import { runOverlay } from "./tui.js";
+import {
   runClaude,
   runRealClaude,
   resolveClaudePath,
@@ -81,16 +88,23 @@ program
   .option("-m, --model <model>", "Claude model to use (e.g. claude-opus-4-8)")
   .option("--dry-run", "analyze only; do not run claude")
   .option("--no-scan", "skip scanning the codebase for in-scope context")
+  .option(
+    "-y, --yes",
+    "skip the interactive overlay; proceed with the hand-off",
+  )
   .action(
-    (
+    async (
       task: string,
-      opts: { model?: string; dryRun?: boolean; scan?: boolean },
+      opts: {
+        model?: string;
+        dryRun?: boolean;
+        scan?: boolean;
+        yes?: boolean;
+      },
     ) => {
-      // Print the pre-run estimate, then hand off to the real `claude` (M1.5).
-      // No shell: `task`/`--model` reach claude as argv elements, never a shell string.
+      // Show the pre-run panel (or the interactive overlay), then hand off to the
+      // real `claude`. No shell: `task`/`--model` reach claude as argv elements.
       const id = opts.model ?? DEFAULT_MODEL;
-      // Hoisted so the codebase block and the recommendation share one task type
-      // (available even with --no-scan).
       const taskType = detectTaskType(task).type;
       try {
         const models = loadModels();
@@ -120,29 +134,55 @@ program
             // scan is best-effort; fall back to prompt-only input.
           }
         }
-        // Output relates to the task, so base its prior on the prompt (not the
-        // codebase context, which is read, not regenerated).
+        // Output prior is from the prompt (the codebase is read, not regenerated).
         const output = estimateOutputTokens(promptTokens);
-        if (contextLine) console.log(contextLine);
-        console.log(formatEstimate(estimateCost(input, output, model)));
 
-        // Recommendation (Phase 3): per-Claude-model comparison + cheapest fitting
-        // model + effort, plus an informational cross-provider block. Display-only —
-        // the hand-off model is unchanged (suggest, never switch). Wrapped so any
-        // failure here can never block the estimate or the hand-off.
+        // Compose the pre-run panel (context + estimate + recommendation).
+        const panelLines: string[] = [];
+        if (contextLine) panelLines.push(contextLine);
+        panelLines.push(formatEstimate(estimateCost(input, output, model)));
         try {
-          console.log(formatRecommendation(taskType, input, output, models));
-          console.log(
+          panelLines.push(
+            formatRecommendation(taskType, input, output, models),
+          );
+          panelLines.push(
             formatCrossProvider(crossProviderComparison(input, output)),
           );
         } catch {
-          // recommendation/cross-provider are advisory; never block the hand-off.
+          // recommendation/cross-provider are advisory; never block the run.
         }
+        const panel = panelLines.join("\n");
 
         if (opts.dryRun) {
+          console.log(panel);
           process.exit(0);
         }
-        const r = runClaude(task, model.id);
+
+        // Interactive overlay (Phase 4) on a TTY; else plain text + auto-proceed
+        // (never hangs on non-TTY/CI/--yes).
+        let action: OverlayAction = "proceed";
+        let chosen: string | undefined;
+        if (
+          shouldShowOverlay({
+            stdinTTY: !!process.stdin.isTTY,
+            stdoutTTY: !!process.stdout.isTTY,
+            env: process.env,
+            dryRun: opts.dryRun,
+            yes: opts.yes,
+          })
+        ) {
+          const ov = await runOverlay(panel, models, model.id);
+          action = ov.action;
+          chosen = ov.model;
+        } else {
+          console.log(panel);
+        }
+        const outcome = resolveAction(action, chosen, model.id);
+        if (!outcome.run) {
+          console.log("Cancelled — claude was not run.");
+          process.exit(0);
+        }
+        const r = runClaude(task, outcome.model);
         if (r.notFound) {
           fail(
             "could not find `claude` on PATH (install Claude Code, or set PROMPTMETER_CLAUDE_BIN)",
@@ -251,7 +291,7 @@ program
   .command("intercept", { hidden: true })
   .allowUnknownOption()
   .argument("[args...]", "the original claude args")
-  .action((args: string[]) => {
+  .action(async (args: string[]) => {
     const conf = readConfig(cfg);
     const real =
       conf?.realClaude ?? resolveClaudePath(process.env, cfg.shimDir);
@@ -260,25 +300,59 @@ program
         "could not find `claude` (run `promptmeter install` or set PROMPTMETER_CLAUDE_BIN)",
       );
     }
+    let finalArgs = args;
     if (!bypassActive()) {
-      const { prompt, model } = detectPromptAndModel(args, DEFAULT_MODEL);
-      if (prompt) {
-        try {
-          const m = loadModels().find((x) => x.id === model);
-          if (m) {
-            const input = estimateTokens(prompt);
-            console.log(
-              formatEstimate(
-                estimateCost(input, estimateOutputTokens(input), m),
+      try {
+        const { prompt, model } = detectPromptAndModel(args, DEFAULT_MODEL);
+        const models = loadModels();
+        const m = models.find((x) => x.id === model);
+        if (prompt && m) {
+          const input = estimateTokens(prompt);
+          const output = estimateOutputTokens(input);
+          const panelLines = [formatEstimate(estimateCost(input, output, m))];
+          try {
+            panelLines.push(
+              formatRecommendation(
+                detectTaskType(prompt).type,
+                input,
+                output,
+                models,
               ),
             );
+            panelLines.push(
+              formatCrossProvider(crossProviderComparison(input, output)),
+            );
+          } catch {
+            // recommendation/cross-provider are advisory.
           }
-        } catch {
-          // Never block the hand-off on an estimate failure — claude still runs.
+          const panel = panelLines.join("\n");
+          let action: OverlayAction = "proceed";
+          let chosen: string | undefined;
+          if (
+            shouldShowOverlay({
+              stdinTTY: !!process.stdin.isTTY,
+              stdoutTTY: !!process.stdout.isTTY,
+              env: process.env,
+            })
+          ) {
+            const ov = await runOverlay(panel, models, m.id);
+            action = ov.action;
+            chosen = ov.model;
+          } else {
+            console.log(panel);
+          }
+          const outcome = resolveAction(action, chosen, m.id);
+          if (!outcome.run) {
+            console.log("Cancelled — claude was not run.");
+            process.exit(0);
+          }
+          if (chosen) finalArgs = setModelArg(args, outcome.model);
         }
+      } catch {
+        // Never block the hand-off on an estimate/overlay failure — claude still runs.
       }
     }
-    const r = runRealClaude(real, args);
+    const r = runRealClaude(real, finalArgs);
     if (r.error) {
       fail(
         `failed to launch claude: ${(r.error as NodeJS.ErrnoException).code ?? r.error.message}`,
@@ -287,7 +361,7 @@ program
     process.exit(exitCodeFor(r));
   });
 
-export function main(argv: string[] = process.argv): void {
+export async function main(argv: string[] = process.argv): Promise<void> {
   // commander prints help to stderr and exits 1 when parsed with no subcommand,
   // so handle the no-args case BEFORE parse() to satisfy the "help to stdout,
   // exit 0" contract.
@@ -295,7 +369,8 @@ export function main(argv: string[] = process.argv): void {
     program.outputHelp();
     process.exit(0);
   }
-  program.parse(argv);
+  // parseAsync: the `run`/`intercept` actions are async (the Ink overlay).
+  await program.parseAsync(argv);
 }
 
-main();
+void main();

@@ -83,11 +83,11 @@ Goal: a runnable `promptmeter` CLI that captures a prompt, estimates a cost rang
 
 ---
 
-## Phase 4 — Interactive TUI overlay (Ink)
-- ☐ Ink-based pre-run panel: detected context, estimated usage (range), alternatives, recommendation
-- ☐ Actions: **[Proceed]** · **[Switch model]** (Claude family, passes `--model`/effort) · **[Cancel]**
-- ☐ Non-TTY / CI fallback to plain text + a default action
-- **Acceptance:** the overlay appears on intercepted `claude` calls and each action behaves correctly.
+## Phase 4 — Interactive TUI overlay (Ink) ☑
+- ☑ Ink-based pre-run panel: detected context, estimated usage (range), alternatives, recommendation
+- ☑ Actions: **[Proceed]** · **[Switch model]** (Claude family, passes `--model`/effort) · **[Cancel]**
+- ☑ Non-TTY / CI fallback to plain text + a default action
+- **Acceptance:** the overlay appears on intercepted `claude` calls and each action behaves correctly. — **met (19/19; Ink Proceed/Switch/Cancel on `run`+intercept, never-hang non-TTY fallback + exit pass-through, crash-proof `runOverlay`, injection-safe suggest-only hand-off; reviewed; PR on `feature/phase-4-ink-tui`; one-time manual TTY smoke recommended)**
 
 ---
 
