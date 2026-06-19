@@ -51,6 +51,53 @@ PromptMeter is built around what is **genuinely achievable** inside Claude Code 
 
 ---
 
+## Quick start
+
+PromptMeter wires into your shell so a cost estimate appears **before every `claude` call** — without changing how you use Claude Code.
+
+```bash
+git clone https://github.com/NabilHKhoury/promptmeter.git
+cd promptmeter
+npm install      # installs dependencies and builds (via the prepare script)
+npm run wire     # shims `claude` so the estimate runs first
+```
+
+Open a **new terminal** and use Claude Code exactly as before:
+
+```bash
+claude "refactor this API service and add error handling"
+# → PromptMeter shows the estimate + recommended model, then runs the real claude
+```
+
+Check it's active anytime with `npm run wire:status`.
+
+> **Requirements:** Node ≥ 18 and the `claude` CLI already on your PATH. PromptMeter **refuses to install if `claude` isn't found** — it never shims a missing binary.
+
+### Optional: the `promptmeter` command
+
+`npm run wire` is all you need for the always-on estimate. To also run estimates by hand (`promptmeter run`, `models`, `scan`), put the command on your PATH:
+
+```bash
+npm link             # adds the `promptmeter` command globally
+promptmeter models
+```
+
+## Remove it anytime
+
+Clean removal is a first-class feature — a tool that edits your shell is only worth installing if you can take it back out just as easily.
+
+```bash
+npm run unwire   # removes the shim and restores your shell profile byte-for-byte
+```
+
+This undoes the single marked block PromptMeter added to your shell profile and deletes `~/.promptmeter`. Your real `claude` is cached at install time and stays reachable the entire time — interception can never strand it. To skip PromptMeter for a single call without uninstalling:
+
+```bash
+PROMPTMETER_OFF=1 claude "…"
+```
+
+> **Unwire before deleting the repo.** The shim points back at this folder, so removing the folder first would leave a dangling shim on your PATH. Run `npm run unwire`, *then* delete. (Hardening this so a deleted repo self-heals is tracked on the roadmap.)
+
 ## Architecture
 
 ```

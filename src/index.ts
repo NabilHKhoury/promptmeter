@@ -252,9 +252,20 @@ program
   .action(() => {
     try {
       const r = install(cfg);
-      console.log(`Installed claude interception. Edited ${r.profilePath}`);
       console.log(
-        "  The PATH change applies to NEW shells. Skip once with PROMPTMETER_OFF=1; remove with `promptmeter uninstall`.",
+        "Wired in. `claude` now shows a cost estimate before it runs.",
+      );
+      console.log(`  Edited:     ${r.profilePath}`);
+      console.log(
+        `  Real claude: ${r.realClaude}  (cached; always still reachable)`,
+      );
+      console.log(
+        '  Next:       open a NEW terminal, then run `claude "…"` as usual.',
+      );
+      console.log("  Verify:     promptmeter status");
+      console.log('  Skip once:  PROMPTMETER_OFF=1 claude "…"');
+      console.log(
+        "  Remove:     promptmeter uninstall  (or `npm run unwire` in this repo) — restores your shell byte-for-byte.",
       );
     } catch (err) {
       fail((err as Error).message);
@@ -267,7 +278,10 @@ program
   .action(() => {
     uninstall(cfg);
     console.log(
-      "Removed claude interception. Restart your shell to drop the PATH override.",
+      "Unwired. Removed the `claude` shim and restored your shell profile byte-for-byte.",
+    );
+    console.log(
+      "  Open a new terminal (or restart your shell) to drop the PATH override. Your `claude` is untouched.",
     );
   });
 

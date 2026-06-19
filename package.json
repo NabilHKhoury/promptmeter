@@ -15,7 +15,11 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
+    "prepare": "npm run build",
     "start": "node bin/promptmeter.js",
+    "wire": "node bin/promptmeter.js install",
+    "unwire": "node bin/promptmeter.js uninstall",
+    "wire:status": "node bin/promptmeter.js status",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "format": "prettier --write .",
