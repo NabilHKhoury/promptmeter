@@ -7,6 +7,7 @@ import {
   estimateCost,
   formatEstimate,
 } from "./estimate.js";
+import { runClaude, exitCodeFor } from "./claude.js";
 
 const DEFAULT_MODEL = "claude-sonnet-4-6";
 
@@ -37,9 +38,10 @@ program
   .argument("<task>", "the task/prompt to analyze")
   .description("Analyze a task and (later) hand off to claude")
   .option("-m, --model <model>", "Claude model to use (e.g. claude-opus-4-8)")
-  .action((task: string, opts: { model?: string }) => {
-    // M1.4: pre-run cost estimate (labeled ranges). The real `claude` hand-off is
-    // M1.5. No exec, no network — only the local config is read.
+  .option("--dry-run", "analyze only; do not run claude")
+  .action((task: string, opts: { model?: string; dryRun?: boolean }) => {
+    // Print the pre-run estimate, then hand off to the real `claude` (M1.5).
+    // No shell: `task`/`--model` reach claude as argv elements, never a shell string.
     const id = opts.model ?? DEFAULT_MODEL;
     try {
       const model = loadModels().find((m) => m.id === id);
@@ -49,6 +51,22 @@ program
       const input = estimateTokens(task);
       const output = estimateOutputTokens(input);
       console.log(formatEstimate(estimateCost(input, output, model)));
+
+      if (opts.dryRun) {
+        process.exit(0);
+      }
+      const r = runClaude(task, model.id);
+      if (r.notFound) {
+        fail(
+          "could not find `claude` on PATH (install Claude Code, or set PROMPTMETER_CLAUDE_BIN)",
+        );
+      }
+      if (r.error) {
+        fail(
+          `failed to launch claude: ${(r.error as NodeJS.ErrnoException).code ?? r.error.message}`,
+        );
+      }
+      process.exit(exitCodeFor(r));
     } catch (err) {
       fail((err as Error).message);
     }

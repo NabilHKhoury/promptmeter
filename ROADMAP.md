@@ -47,10 +47,12 @@ Goal: a runnable `promptmeter` CLI that captures a prompt, estimates a cost rang
 - ☑ Plain-text pre-run report (no TUI): model, token range, cost range, all labeled as estimates
 - **Acceptance:** unit tests cover representative prompts across all three Claude models. — **met (Vitest added; 15 tests incl. Opus/Sonnet/Haiku; PR on `feature/milestone-1-4-cost-estimation`)**
 
-### Milestone 1.5 — Hand-off to `claude`
-- ☐ `promptmeter run "<task>"` execs the real `claude` with the chosen `--model`
-- ☐ Pass-through of exit code, stdio; `--dry-run` to analyze without executing
-- **Acceptance:** `promptmeter run` behaves like `claude` after the analysis step.
+### Milestone 1.5 — Hand-off to `claude` ☑
+- ☑ `promptmeter run "<task>"` execs the real `claude` with the chosen `--model`
+- ☑ Pass-through of exit code, stdio; `--dry-run` to analyze without executing
+- **Acceptance:** `promptmeter run` behaves like `claude` after the analysis step. — **met (16/16; injection-safe spawn, exit-code pass-through, `claude` never broken; PR on `feature/milestone-1-5-claude-handoff`)**
+
+> **✅ Phase 1 complete** — `promptmeter run "<task>"` captures the prompt, estimates a labeled cost range from static Claude pricing, and hands off to the real `claude`.
 
 ---
 
