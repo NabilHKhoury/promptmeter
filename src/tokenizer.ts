@@ -22,15 +22,35 @@ export interface TokenEstimate {
   isApproximate: boolean;
 }
 
-export function estimateTokens(text: string): TokenEstimate {
-  const cp = [...text].length;
-  if (cp === 0) {
+/**
+ * Token range from a character/byte count (the 3.5–4.5 ratio). Shared by the
+ * prompt estimator and the codebase byte-size proxy (Phase 2). `n <= 0` → zeros.
+ */
+export function tokenRangeFromChars(n: number): TokenEstimate {
+  if (n <= 0) {
     return { low: 0, high: 0, estimate: 0, isApproximate: true };
   }
-  const low = Math.floor(cp / 4.5);
-  const high = Math.ceil(cp / 3.5);
-  // Clamp is a defensive guard; for every cp >= 1, round(cp/4) already lands in
+  const low = Math.floor(n / 4.5);
+  const high = Math.ceil(n / 3.5);
+  // Clamp is a defensive guard; for every n >= 1, round(n/4) already lands in
   // [low, high], so it never actually fires.
-  const estimate = Math.min(high, Math.max(low, Math.round(cp / 4)));
+  const estimate = Math.min(high, Math.max(low, Math.round(n / 4)));
   return { low, high, estimate, isApproximate: true };
+}
+
+export function estimateTokens(text: string): TokenEstimate {
+  return tokenRangeFromChars([...text].length);
+}
+
+/** Sum two token-range estimates bound-wise (e.g. prompt + codebase). */
+export function combineTokenEstimates(
+  a: TokenEstimate,
+  b: TokenEstimate,
+): TokenEstimate {
+  return {
+    low: a.low + b.low,
+    high: a.high + b.high,
+    estimate: a.estimate + b.estimate,
+    isApproximate: true,
+  };
 }

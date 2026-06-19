@@ -27,7 +27,8 @@
     "node": ">=18"
   },
   "dependencies": {
-    "commander": "^12"
+    "commander": "^12",
+    "ignore": "^7.0.5"
   },
   "devDependencies": {
     "@types/node": "^20",

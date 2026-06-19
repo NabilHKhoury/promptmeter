@@ -2,12 +2,18 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { Command } from "commander";
 import { loadModels } from "./models.js";
-import { estimateTokens } from "./tokenizer.js";
+import {
+  estimateTokens,
+  tokenRangeFromChars,
+  combineTokenEstimates,
+} from "./tokenizer.js";
 import {
   estimateOutputTokens,
   estimateCost,
   formatEstimate,
 } from "./estimate.js";
+import { detectTaskType } from "./detect.js";
+import { scanRepo, formatContext } from "./scan.js";
 import {
   runClaude,
   runRealClaude,
@@ -72,38 +78,68 @@ program
   .description("Analyze a task and (later) hand off to claude")
   .option("-m, --model <model>", "Claude model to use (e.g. claude-opus-4-8)")
   .option("--dry-run", "analyze only; do not run claude")
-  .action((task: string, opts: { model?: string; dryRun?: boolean }) => {
-    // Print the pre-run estimate, then hand off to the real `claude` (M1.5).
-    // No shell: `task`/`--model` reach claude as argv elements, never a shell string.
-    const id = opts.model ?? DEFAULT_MODEL;
-    try {
-      const model = loadModels().find((m) => m.id === id);
-      if (!model) {
-        fail(`unknown model "${id}" (see \`promptmeter models\`)`);
-      }
-      const input = estimateTokens(task);
-      const output = estimateOutputTokens(input);
-      console.log(formatEstimate(estimateCost(input, output, model)));
+  .option("--no-scan", "skip scanning the codebase for in-scope context")
+  .action(
+    (
+      task: string,
+      opts: { model?: string; dryRun?: boolean; scan?: boolean },
+    ) => {
+      // Print the pre-run estimate, then hand off to the real `claude` (M1.5).
+      // No shell: `task`/`--model` reach claude as argv elements, never a shell string.
+      const id = opts.model ?? DEFAULT_MODEL;
+      try {
+        const model = loadModels().find((m) => m.id === id);
+        if (!model) {
+          fail(`unknown model "${id}" (see \`promptmeter models\`)`);
+        }
+        const promptTokens = estimateTokens(task);
+        let input = promptTokens;
+        let contextLine: string | undefined;
+        if (opts.scan !== false) {
+          // Codebase context (Phase 2): adds the in-scope token load to the
+          // INPUT range. Best-effort — a scan failure must never block the run.
+          try {
+            const s = scanRepo(process.cwd());
+            input = combineTokenEstimates(
+              promptTokens,
+              tokenRangeFromChars(s.totalBytes),
+            );
+            contextLine = formatContext(
+              s.project,
+              s.fileCount,
+              detectTaskType(task).type,
+              s.truncated,
+            );
+          } catch {
+            // scan is best-effort; fall back to prompt-only input.
+          }
+        }
+        // Output relates to the task, so base its prior on the prompt (not the
+        // codebase context, which is read, not regenerated).
+        const output = estimateOutputTokens(promptTokens);
+        if (contextLine) console.log(contextLine);
+        console.log(formatEstimate(estimateCost(input, output, model)));
 
-      if (opts.dryRun) {
-        process.exit(0);
+        if (opts.dryRun) {
+          process.exit(0);
+        }
+        const r = runClaude(task, model.id);
+        if (r.notFound) {
+          fail(
+            "could not find `claude` on PATH (install Claude Code, or set PROMPTMETER_CLAUDE_BIN)",
+          );
+        }
+        if (r.error) {
+          fail(
+            `failed to launch claude: ${(r.error as NodeJS.ErrnoException).code ?? r.error.message}`,
+          );
+        }
+        process.exit(exitCodeFor(r));
+      } catch (err) {
+        fail((err as Error).message);
       }
-      const r = runClaude(task, model.id);
-      if (r.notFound) {
-        fail(
-          "could not find `claude` on PATH (install Claude Code, or set PROMPTMETER_CLAUDE_BIN)",
-        );
-      }
-      if (r.error) {
-        fail(
-          `failed to launch claude: ${(r.error as NodeJS.ErrnoException).code ?? r.error.message}`,
-        );
-      }
-      process.exit(exitCodeFor(r));
-    } catch (err) {
-      fail((err as Error).message);
-    }
-  });
+    },
+  );
 
 program
   .command("models")
@@ -125,6 +161,27 @@ program
         `  ${m.id}  ${m.display_name}  $${m.input_per_mtok}/$${m.output_per_mtok} per Mtok  ${m.context_window} ctx`,
       );
       console.log(`      fit: ${m.fit_notes}`);
+    }
+  });
+
+program
+  .command("scan")
+  .argument("[dir]", "directory to scan (default: current directory)")
+  .description(
+    "Scan a repo: detected context + in-scope token range (estimate)",
+  )
+  .action((dir?: string) => {
+    try {
+      const s = scanRepo(dir ?? process.cwd());
+      const range = tokenRangeFromChars(s.totalBytes);
+      console.log(
+        formatContext(s.project, s.fileCount, undefined, s.truncated),
+      );
+      console.log(
+        `  In-scope tokens: ~${range.low} – ${range.high} (approximate prior, ${s.fileCount} ${s.fileCount === 1 ? "file" : "files"})`,
+      );
+    } catch (err) {
+      fail((err as Error).message);
     }
   });
 

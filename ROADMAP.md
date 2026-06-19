@@ -65,12 +65,12 @@ Goal: a runnable `promptmeter` CLI that captures a prompt, estimates a cost rang
 
 ---
 
-## Phase 2 — Codebase context engine
-- ☐ Repo scan: glob + `.gitignore`-aware file discovery
-- ☐ Detect language / framework / project type (heuristics first; AST/embeddings later)
-- ☐ Detect task type from the prompt (refactor / debug / generate / explain)
-- ☐ Estimate in-scope token load from likely-relevant files (feeds the input-token range)
-- **Acceptance:** on a sample Node repo, scan reports framework + a defensible in-scope token range.
+## Phase 2 — Codebase context engine ☑
+- ☑ Repo scan: glob + `.gitignore`-aware file discovery
+- ☑ Detect language / framework / project type (heuristics first; AST/embeddings later)
+- ☑ Detect task type from the prompt (refactor / debug / generate / explain)
+- ☑ Estimate in-scope token load from likely-relevant files (feeds the input-token range)
+- **Acceptance:** on a sample Node repo, scan reports framework + a defensible in-scope token range. — **met (17/17; `scan`/`run` codebase-aware, byte-size proxy, never reads contents/ignored; reviewed; PR on `feature/phase-2-codebase-engine`)**
 
 ---
 
