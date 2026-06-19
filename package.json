@@ -1,0 +1,39 @@
+{
+  "name": "promptmeter",
+  "version": "0.1.0",
+  "description": "Terminal-native LLM cost & model-intelligence layer for Claude Code",
+  "type": "module",
+  "license": "AGPL-3.0-or-later",
+  "bin": {
+    "promptmeter": "bin/promptmeter.js"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "data"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "start": "node bin/promptmeter.js",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "commander": "^12"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "eslint": "^9",
+    "eslint-config-prettier": "^10",
+    "prettier": "^3",
+    "tsup": "^8",
+    "typescript": "^5",
+    "typescript-eslint": "^8"
+  }
+}
