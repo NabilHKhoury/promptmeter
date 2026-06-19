@@ -74,12 +74,12 @@ Goal: a runnable `promptmeter` CLI that captures a prompt, estimates a cost rang
 
 ---
 
-## Phase 3 — Model recommendation engine
-- ☐ Compute cost range + qualitative fit per Claude model + effort level
-- ☐ Recommend the cheapest Claude option that fits the detected task
-- ☐ Cross-provider comparison block — **informational only**, labeled "cannot run inside Claude Code"
-- ☐ Document the fit methodology (sources, task-type mapping) — no invented numbers
-- **Acceptance:** recommendation is reproducible and its reasoning is shown to the user.
+## Phase 3 — Model recommendation engine ☑
+- ☑ Compute cost range + qualitative fit per Claude model + effort level
+- ☑ Recommend the cheapest Claude option that fits the detected task
+- ☑ Cross-provider comparison block — **informational only**, labeled "cannot run inside Claude Code"
+- ☑ Document the fit methodology (sources, task-type mapping) — no invented numbers
+- **Acceptance:** recommendation is reproducible and its reasoning is shown to the user. — **met (17/17; cheapest-fitting Claude + effort, qualitative fit no %, suggest-only, cross-provider informational, reproducible; `docs/recommendation-methodology.md`; reviewed; PR on `feature/phase-3-recommendation-engine`)**
 
 ---
 

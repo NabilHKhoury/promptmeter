@@ -1,0 +1,14 @@
+[
+  {
+    "name": "Google Gemini 2.5 Pro",
+    "input_per_mtok": 1.25,
+    "output_per_mtok": 10,
+    "note": "Estimate (~2026-06) — verify with the provider. Informational only; cannot run inside Claude Code."
+  },
+  {
+    "name": "OpenAI GPT-5",
+    "input_per_mtok": 1.25,
+    "output_per_mtok": 10,
+    "note": "Estimate (~2026-06) — verify with the provider. Informational only; cannot run inside Claude Code."
+  }
+]

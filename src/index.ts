@@ -14,6 +14,8 @@ import {
 } from "./estimate.js";
 import { detectTaskType } from "./detect.js";
 import { scanRepo, formatContext } from "./scan.js";
+import { formatRecommendation } from "./recommend.js";
+import { crossProviderComparison, formatCrossProvider } from "./providers.js";
 import {
   runClaude,
   runRealClaude,
@@ -87,8 +89,12 @@ program
       // Print the pre-run estimate, then hand off to the real `claude` (M1.5).
       // No shell: `task`/`--model` reach claude as argv elements, never a shell string.
       const id = opts.model ?? DEFAULT_MODEL;
+      // Hoisted so the codebase block and the recommendation share one task type
+      // (available even with --no-scan).
+      const taskType = detectTaskType(task).type;
       try {
-        const model = loadModels().find((m) => m.id === id);
+        const models = loadModels();
+        const model = models.find((m) => m.id === id);
         if (!model) {
           fail(`unknown model "${id}" (see \`promptmeter models\`)`);
         }
@@ -107,7 +113,7 @@ program
             contextLine = formatContext(
               s.project,
               s.fileCount,
-              detectTaskType(task).type,
+              taskType,
               s.truncated,
             );
           } catch {
@@ -119,6 +125,19 @@ program
         const output = estimateOutputTokens(promptTokens);
         if (contextLine) console.log(contextLine);
         console.log(formatEstimate(estimateCost(input, output, model)));
+
+        // Recommendation (Phase 3): per-Claude-model comparison + cheapest fitting
+        // model + effort, plus an informational cross-provider block. Display-only —
+        // the hand-off model is unchanged (suggest, never switch). Wrapped so any
+        // failure here can never block the estimate or the hand-off.
+        try {
+          console.log(formatRecommendation(taskType, input, output, models));
+          console.log(
+            formatCrossProvider(crossProviderComparison(input, output)),
+          );
+        } catch {
+          // recommendation/cross-provider are advisory; never block the hand-off.
+        }
 
         if (opts.dryRun) {
           process.exit(0);
