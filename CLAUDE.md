@@ -23,7 +23,7 @@ See `ROADMAP.md` for milestones and `README.md` for the product vision.
 - `promptmeter models` — list the configured Claude models + estimated pricing (exercises `loadModels()`).
 
 ## Layout
-- `src/` — TypeScript source (entry `src/index.ts`).
+- `src/` — TypeScript source: `index.ts` (CLI), `models.ts` (`loadModels()`), `tokenizer.ts` (`estimateTokens()` — returns a labeled token **range** + `isApproximate`; heuristic, no exact offline Claude tokenizer; surfaced in `run`).
 - `bin/` — executable launcher `promptmeter.js` (shebang; dynamic-imports `../dist/index.js`).
 - `data/` — static config. **`data/models.json` is the pricing source of truth**, seeded with the three Claude models (Opus 4.8, Sonnet 4.6, Haiku 4.5). The typed, validating loader is `src/models.ts` (`loadModels()` — runtime-reads `data/models.json`, fails loudly on malformed entries; adding a model is a JSON-only edit, no code change).
 - `dist/` — build output (gitignored).

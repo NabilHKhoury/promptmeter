@@ -37,10 +37,10 @@ Goal: a runnable `promptmeter` CLI that captures a prompt, estimates a cost rang
 - ☑ Typed loader + validation (`src/models.ts`)
 - **Acceptance:** models load as typed objects; adding an entry needs no code change. — **met (18/18; `promptmeter models`; PR on `feature/milestone-1-2-model-config`)**
 
-### Milestone 1.3 — Token estimation
-- ☐ `src/tokenizer.ts` — estimate prompt tokens (official tokenizer where available; heuristic fallback)
-- ☐ Output an estimate **range** + `isApproximate` flag
-- **Acceptance:** a known prompt yields a stable range; approximations are flagged.
+### Milestone 1.3 — Token estimation ☑
+- ☑ `src/tokenizer.ts` — estimate prompt tokens (heuristic; no offline Claude tokenizer — documented)
+- ☑ Output an estimate **range** + `isApproximate` flag
+- **Acceptance:** a known prompt yields a stable range; approximations are flagged. — **met (14/14; `run` shows `~low–high (approximate)`; PR on `feature/milestone-1-3-token-estimation`)**
 
 ### Milestone 1.4 — Cost estimation + plain output
 - ☐ `src/estimate.ts` — input/output/total cost as a **range** from model pricing (pure, unit-tested)

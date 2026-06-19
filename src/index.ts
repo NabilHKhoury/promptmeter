@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { Command } from "commander";
 import { loadModels } from "./models.js";
+import { estimateTokens } from "./tokenizer.js";
 
 // Read the real version from package.json (single source of truth). After
 // bundling, this file lives at dist/index.js, so "../package.json" resolves to
@@ -24,14 +25,17 @@ program
   .description("Analyze a task and (later) hand off to claude")
   .option("-m, --model <model>", "Claude model to use (e.g. claude-opus-4-8)")
   .action((task: string, opts: { model?: string }) => {
-    // Milestone 1.1: this is a STUB. No estimation, no exec, no network.
-    console.log("PromptMeter analysis (stub — estimation not yet wired):");
+    // M1.3: token estimate (a labeled range) is wired. Cost (M1.4) and the real
+    // `claude` hand-off (M1.5) are still pending. No exec, no network.
+    const t = estimateTokens(task);
+    console.log("PromptMeter analysis:");
     console.log(`  Task:  ${task}`);
+    console.log(`  Estimated prompt tokens: ~${t.low}–${t.high} (approximate)`);
     if (opts.model) {
       console.log(`  Model: ${opts.model}`);
     }
     console.log(
-      "  Note: cost/token estimates and the real `claude` hand-off arrive in Milestones 1.3-1.5.",
+      "  Note: cost estimate and the real `claude` hand-off arrive in Milestones 1.4-1.5.",
     );
   });
 
